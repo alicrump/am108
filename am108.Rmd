@@ -1,5 +1,5 @@
 ---
-title: "tennis"
+title: "AM108 Project"
 author: "Ali Crump"
 date: "11/24/2019"
 output: html_document
@@ -8,10 +8,14 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
+# Load needed libraries
+
 library(tidyverse)
 ```
 
 ```{r}
+# Read in the top 100 data and set the variable types
+
 tennis <- read_csv("data_top100 2.csv", col_types = cols(
                                                           Rank = col_double(),
                                                           Player = col_character(),
@@ -22,15 +26,23 @@ tennis <- read_csv("data_top100 2.csv", col_types = cols(
 ```
 
 ```{r}
+# Create a column with Handedness as a dummy variable
+# Add up all the lefties to find percentage of lefties in the data (by Rank)
+
 lefty_rank <- tennis %>% 
   mutate(left = ifelse(Handedness == "Left-handed", 1,0)) %>% 
   group_by(Rank) %>% 
   summarize(perc = round(100*(sum(left)/ n())))
 
+# Plot the percentage of lefties versus rank
+# Add axis labels and remove background grid lines and gray theme
+
 ggplot(lefty_rank, aes(x = Rank, y = perc)) + 
   geom_point(alpha = 0.7) +
-  labs(x = "Rank", y = "% Left-Handed", title = "Cumulative Fraction Left-handed Versus Rank", subtitle = "Top 100 ATP Rankings from September 2000") +
-  theme_bw()+
+  labs(x = "Rank", y = "% Left-Handed", 
+       title = "Cumulative Fraction Left-handed Versus Rank", 
+       subtitle = "Top 100 ATP Rankings from September 2000") +
+  theme_bw() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
 
 ```
