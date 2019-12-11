@@ -46,4 +46,19 @@ ggplot(lefty_rank, aes(x = Rank, y = perc)) +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
 
 ```
+```{r}
+tennis %>% 
+  filter(!(Date > "2006-01-02")) %>% 
+  mutate(left = ifelse(Handedness == "Left-handed", 1,0)) %>% 
+  group_by(Rank) %>% 
+  summarize(perc = round(100*(sum(left)/ n()))) %>% 
+  filter(perc != 0) %>% 
+  ggplot(aes(x = Rank, y = perc)) +
+  geom_point() +
+  labs(x = "Rank", y = "% Left-Handed", 
+       title = "Cumulative Fraction Left-handed Versus Rank", 
+       subtitle = "Top 100 ATP Rankings from September 2000 to 2005") +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
+```
 
