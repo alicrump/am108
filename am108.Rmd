@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = FALSE)
 # Load needed libraries
 
 library(tidyverse)
+library(gt)
 ```
 
 ```{r}
@@ -24,6 +25,8 @@ tennis <- read_csv("raw-data/data_top100 2.csv", col_types = cols(
                                                           Handedness = col_character()))
 ```
 
+### Baseball graph replication
+I created a graph to replicate that of baseball rankings found in the paper. I calculated the percentage of lefties in tennis for each rank and plotted it. Tate later added the prediction line in R.
 
 ```{r}
 # Create a column with Handedness as a dummy variable
@@ -47,6 +50,10 @@ ggplot(lefty_rank, aes(x = Rank, y = perc)) +
 
 ```
 
+### Do we always see a dip?
+
+Our original theory was that we see this dip in the top 25 rankings because of the dominance of lefty Rafael Nadal. Perhaps righties at the top were used to playing really talented lefties like Nadal, so the lefty advantage in competitive sports disappears. I filtered for years before Nadal was so dominant and used the same methods to create this graph. However, we see below that there is a "dip" in the top rankings even when Nadal isn't dominant. Therefore, there is something else going on in professional tennis that our model isn't accounting for, or this is a really odd set of circumstances that just happens by chance to be the case for the data at hand.
+
 ```{r}
 # Filtering before Nadal dominant
 
@@ -65,18 +72,27 @@ tennis %>%
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
 ```
 
+### Data exploration
+
+We were curious to see how many lefties had even been in the top 25 rankings consistently, or if it really was just Nadal. We find that 6 left handers have consistently been in the top 25, consistently meaning in the top 25 for more than a year. We were suprised by how low this number was.
+
 ```{r}
 top <- tennis %>% 
   filter(Rank < 25) %>% 
   group_by(Player) %>% 
-  mutate(n = n()) #%>% 
-  # filter(n > 52)
+  mutate(n = n()) %>% 
+  filter(n > 52)
 
 top %>%
   filter(Handedness == "Left-handed") %>% 
-  distinct(Player, keep.all = TRUE)
+  distinct(Player, keep.all = TRUE) %>% 
+  select(Player)
   
 ```
+
+### Left-handedness over time
+
+We were curious as to how the left handed population changes over time, but it's very messy because I didn't know how to plot it by year, so the graph shows the lefty percent for 52 weeks of rankings for 20 years.
 
 ```{r}
 tennis %>% 
@@ -84,12 +100,19 @@ tennis %>%
   group_by(Date) %>% 
   mutate(perc = sum(left)/100) %>% 
   ggplot(aes(x = Date, y = perc)) +
-  geom_jitter()
+  geom_jitter() +
+  labs(y = "% Left-handed")
 ```
 
-### Same analysis for our simulated tennis data using agent-based modeling
+### Agent-based model results 
+
+We used an agent-based model to simulate the left handed population in tennis for many years.  
 
 ```{r}
+# There is a much nicer way of reading in all of this data, but we were limited
+# with our time. Here I'm reading in the data for each simulation, and I'm 
+# naming the columns and specifying the variable types. I repeat this 12 times
+# and then combine all of the data into one data frame.
 
 # lefty percetage: 0.0859375
 simulation0 <- read_csv("raw-data/data.csv", col_names = c("rank", "percent"), 
@@ -159,8 +182,15 @@ simulations <- rbind(simulation0,simulation1, simulation2, simulation3, simulati
 
 ```
 
+This graph shows the results of one simulation where we see a dip, like what we saw with our actual tennis data.
+
+
 ```{r}
+# Simple graph of our results from one simulation. We're graphing percent of
+# left handers for each rank.
+
 simulation0 %>% 
+  mutate(percent = 100*percent) %>% 
   ggplot(aes(x = rank, y = percent)) +
   geom_point() +
   labs(x = "Rank", y = "% Left-Handed", 
@@ -169,15 +199,23 @@ simulation0 %>%
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
 ```
 
+This graph then shows the average of all of our simulations, we no longer see a dip, as the dip only happened about 30% of the time in our simulations.
+
+
 ```{r}
+# We're taking the average of % lefties for each ranking respectively.
+# Then we're making a scatter plot of our results, similar to our 
+# previous graphs. I set the ylimits to be the same as the previous
+# graph so that we could compare the two more easily.
+
 simulations %>%
   group_by(rank) %>% 
-  mutate(avg = mean(percent)) %>% 
+  mutate(avg = 100*mean(percent)) %>% 
   ggplot(aes(x = rank, y = avg)) +
   geom_point() +
-  labs(x = "Rank", y = "% Left-Handed", 
+  labs(x = "Rank", y = "Avg % Left-Handed", 
        title = "Twelve Simulations of Our Agent-Based Model") +
   theme_bw() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
-  ylim(0.0,0.5)
+  ylim(0.0,50)
 ```
