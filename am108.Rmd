@@ -16,14 +16,14 @@ library(tidyverse)
 ```{r}
 # Read in the top 100 data and set the variable types
 
-tennis <- read_csv("data_top100 2.csv", col_types = cols(
+tennis <- read_csv("raw-data/data_top100 2.csv", col_types = cols(
                                                           Rank = col_double(),
                                                           Player = col_character(),
                                                           Points = col_double(),
                                                           Date = col_date(format = ""),
-                                                          Handedness = col_character()
-                                                        ))
+                                                          Handedness = col_character()))
 ```
+
 
 ```{r}
 # Create a column with Handedness as a dummy variable
@@ -46,7 +46,10 @@ ggplot(lefty_rank, aes(x = Rank, y = perc)) +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
 
 ```
+
 ```{r}
+# Filtering before Nadal dominant
+
 tennis %>% 
   filter(!(Date > "2006-01-02")) %>% 
   mutate(left = ifelse(Handedness == "Left-handed", 1,0)) %>% 
@@ -54,7 +57,7 @@ tennis %>%
   summarize(perc = round(100*(sum(left)/ n()))) %>% 
   filter(perc != 0) %>% 
   ggplot(aes(x = Rank, y = perc)) +
-  geom_point() +
+  geom_point(alpha = 0.8) +
   labs(x = "Rank", y = "% Left-Handed", 
        title = "Cumulative Fraction Left-handed Versus Rank", 
        subtitle = "Top 100 ATP Rankings from September 2000 to 2005") +
@@ -62,3 +65,119 @@ tennis %>%
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
 ```
 
+```{r}
+top <- tennis %>% 
+  filter(Rank < 25) %>% 
+  group_by(Player) %>% 
+  mutate(n = n()) #%>% 
+  # filter(n > 52)
+
+top %>%
+  filter(Handedness == "Left-handed") %>% 
+  distinct(Player, keep.all = TRUE)
+  
+```
+
+```{r}
+tennis %>% 
+  mutate(left = ifelse(Handedness == "Left-handed", 1,0)) %>% 
+  group_by(Date) %>% 
+  mutate(perc = sum(left)/100) %>% 
+  ggplot(aes(x = Date, y = perc)) +
+  geom_jitter()
+```
+
+### Same analysis for our simulated tennis data using agent-based modeling
+
+```{r}
+
+# lefty percetage: 0.0859375
+simulation0 <- read_csv("raw-data/data.csv", col_names = c("rank", "percent"), 
+                       col_types = cols(
+                                        rank = col_double(),
+                                        percent = col_double()))
+# 0.082
+simulation1 <- read_csv("raw-data/data1.csv", col_names = c("rank", "percent"), 
+                       col_types = cols(
+                                        rank = col_double(),
+                                        percent = col_double()))
+#  0.1055
+simulation2 <- read_csv("raw-data/data2.csv", col_names = c("rank", "percent"), 
+                       col_types = cols(
+                                        rank = col_double(),
+                                        percent = col_double()))
+
+#  0.1055
+simulation3 <- read_csv("raw-data/data3.csv", col_names = c("rank", "percent"), 
+                       col_types = cols(
+                                        rank = col_double(),
+                                        percent = col_double()))
+# 0.09765625
+simulation4 <-  read_csv("raw-data/data4.csv", col_names = c("rank", "percent"), 
+                       col_types = cols(
+                                        rank = col_double(),
+                                        percent = col_double()))
+# 0.12109375
+simulation5 <-  read_csv("raw-data/data5.csv", col_names = c("rank", "percent"), 
+                       col_types = cols(
+                                        rank = col_double(),
+                                        percent = col_double()))
+# 0.09375
+simulation6 <-  read_csv("raw-data/data6.csv", col_names = c("rank", "percent"), 
+                       col_types = cols(
+                                        rank = col_double(),
+                                        percent = col_double()))
+# 0.0703125
+simulation7 <-  read_csv("raw-data/data7.csv", col_names = c("rank", "percent"), 
+                       col_types = cols(
+                                        rank = col_double(),
+                                        percent = col_double()))
+
+# 0.078125
+simulation8 <-  read_csv("raw-data/data8.csv", col_names = c("rank", "percent"), 
+                       col_types = cols(
+                                        rank = col_double(),
+                                        percent = col_double()))
+
+# 0.08984375
+simulation9 <-  read_csv("raw-data/data9.csv", col_names = c("rank", "percent"), 
+                       col_types = cols(
+                                        rank = col_double(),
+                                        percent = col_double()))
+# 0.09375
+simulation10 <-  read_csv("raw-data/data10.csv", col_names = c("rank", "percent"), 
+                       col_types = cols(
+                                        rank = col_double(),
+                                        percent = col_double()))
+# 0.13671875
+simulation11 <-  read_csv("raw-data/data11.csv", col_names = c("rank", "percent"), 
+                       col_types = cols(
+                                        rank = col_double(),
+                                        percent = col_double()))
+
+simulations <- rbind(simulation0,simulation1, simulation2, simulation3, simulation4, simulation5, simulation6, simulation7, simulation8, simulation9,simulation10, simulation11)
+
+```
+
+```{r}
+simulation0 %>% 
+  ggplot(aes(x = rank, y = percent)) +
+  geom_point() +
+  labs(x = "Rank", y = "% Left-Handed", 
+       title = "One Simulation of Our Agent-Based Model") +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
+```
+
+```{r}
+simulations %>%
+  group_by(rank) %>% 
+  mutate(avg = mean(percent)) %>% 
+  ggplot(aes(x = rank, y = avg)) +
+  geom_point() +
+  labs(x = "Rank", y = "% Left-Handed", 
+       title = "Twelve Simulations of Our Agent-Based Model") +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
+  ylim(0.0,0.5)
+```
